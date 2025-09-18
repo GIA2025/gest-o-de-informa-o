@@ -1,0 +1,384 @@
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="theme-color" content="#0b63d6">
+  <title>Medição em Cargas Laborais de Arquivo - Papel, Caixas e Maços (Reams)</title>
+  <style>
+    :root{
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color:#111;
+      --primary:#0b63d6;
+      --secondary:#10b981;
+      --accent:#f59e0b;
+      --neutral:#6b7280;
+      --bg:#f3f6fb;
+      --gap:12px;
+      --radius:12px;
+    }
+
+    html,body{height:100%;}
+    body{margin:0;padding:16px;background:var(--bg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    .card{background:white;border-radius:16px;box-shadow:0 8px 20px rgba(20,30,40,0.08);padding:16px;max-width:980px;margin:0 auto}
+
+    .lead{margin:6px 0 14px;color:#333;font-size:15px;line-height:1.4;text-align:left}
+
+    .grid{display:grid;grid-template-columns:1fr;gap:14px}
+    .panel{display:flex;flex-direction:column;gap:12px}
+
+    label{display:block;font-size:14px;margin-bottom:6px;color:#222;font-weight:600}
+    input[type=number]{width:100%;padding:10px;border-radius:10px;border:1px solid #dbe6f3;font-size:15px;background:#fff}
+    input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(11,99,214,0.06)}
+
+    .row{margin-bottom:6px}
+
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    button{border:none;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px}
+    #calc{background:var(--primary);color:#fff}
+    #reset{background:var(--neutral);color:#fff}
+    #copy{background:var(--secondary);color:#fff}
+
+    .result{background:#f9fbff;padding:12px;border-radius:12px;border:1px solid #dbe7f9}
+    .muted{color:#667;font-size:13px}
+
+    #canvasBox{width:100%;height:220px;background:#fff;border:1px solid #e8eef8;border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    canvas{width:100%;height:100%;display:block;border-radius:12px}
+
+    .time-panel{background:#fff;border-radius:10px;padding:10px;border:1px solid #e6f4ea}
+    .info-block{background:#fbfdff;border:1px solid #eaf4ff;padding:10px;border-radius:10px;font-size:13px}
+
+    .examples{margin-top:8px;background:#fff7eb;border:1px solid #ffe0b2;border-radius:10px;padding:10px;font-size:13px}
+
+    footer{margin-top:12px;color:#666;font-size:13px;text-align:center}
+
+    @media(min-width:760px){
+      body{padding:20px}
+      .card{padding:20px}
+      .grid{grid-template-columns:1fr 360px;gap:18px}
+      #canvasBox{height:280px}
+    }
+
+    @media(min-width:1100px){
+      .card{max-width:1100px;padding:28px}
+      #canvasBox{height:340px}
+    }
+  </style>
+
+
+  <main class="card" role="main">
+    <div class="lead">Converta a quantidade de papel em <strong>altura</strong>, <strong>largura</strong> e <strong>profundidade</strong> (formato caixa 3D) e estime o tempo de tratamento em horas/dias úteis.</div>
+
+    <div class="grid">
+      <!-- left: inputs -->
+      <section class="panel" aria-label="Entradas">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div class="row">
+              <label for="thickness">Espessura em folha (mm)</label>
+              <input id="thickness" type="number" min="0.01" step="0.01" value="0.10">
+            </div>
+
+            <div class="row">
+              <label for="width">Largura (lado curto A4 em mm)</label>
+              <input id="width" type="number" min="1" step="0.1" value="210">
+            </div>
+
+            <div class="row">
+              <label for="depth">Profundidade (lado longo A4 em mm)</label>
+              <input id="depth" type="number" min="1" step="0.1" value="297">
+            </div>
+
+            <div class="row">
+              <label for="sheets">Nº de folhas A4</label>
+              <input id="sheets" type="number" min="0" step="1" value="1000">
+            </div>
+          </div>
+
+          <div>
+            <div class="row">
+              <label for="reams">Maços / Reams</label>
+              <input id="reams" type="number" min="0" step="1" value="2">
+            </div>
+
+            <div class="row">
+              <label for="sheetsPerReam">Folhas em maço</label>
+              <input id="sheetsPerReam" type="number" min="1" step="1" value="500">
+            </div>
+
+            <div class="row">
+              <label for="boxes">Caixas</label>
+              <input id="boxes" type="number" min="0" step="1" value="1">
+            </div>
+
+            <div class="row">
+              <label for="sheetsPerBox">Folhas em caixa</label>
+              <input id="sheetsPerBox" type="number" min="1" step="1" value="2500">
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:8px;align-items:flex-start;flex-wrap:wrap">
+          <div style="flex:1;min-width:140px">
+            <label for="covers">Capas (quantidade)</label>
+            <input id="covers" type="number" min="0" step="1" value="0">
+          </div>
+
+          <div style="flex:1;min-width:140px">
+            <label for="coverThickness">Espessura em capa (mm)</label>
+            <input id="coverThickness" type="number" min="0" step="0.01" value="0.50">
+          </div>
+        </div>
+
+        <div class="time-panel" style="margin-top:8px">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <div style="flex:1;min-width:120px">
+              <label for="hoursPerMeter" class="small">Tempo em metro linear (altura)</label>
+              <input id="hoursPerMeter" type="number" min="0" step="0.01" value="2">
+            </div>
+
+            <div style="flex:1;min-width:120px">
+              <label for="hoursPerDay" class="small">Horas de trabalho em dia</label>
+              <input id="hoursPerDay" type="number" min="1" step="0.1" value="7">
+            </div>
+
+          </div>
+          <div id="timeBox" style="margin-top:8px;font-weight:700;color:var(--primary)"></div>
+        </div>
+
+        <div class="controls">
+          <button id="calc">Calcular</button>
+          <button id="reset" type="button">Reset</button>
+          <button id="copy" type="button">Copiar resultados</button>
+        </div>
+
+        <div class="examples" style="margin-top:8px">
+          <strong>Exemplos rápidos</strong>
+          <div class="muted" style="margin-top:6px">
+            1000 folhas = 0.10 mm × 1000 = 100 mm = 0.10 m (altura)<br>
+            1 maço (500 folhas) = 0.05 m (altura)<br>
+            1 caixa (2500 folhas) = 0.25 m (altura)
+          </div>
+        </div>
+      </section>
+
+      <!-- right: resultados + canvas -->
+      <aside class="panel" aria-label="Resultados">
+        <div class="result" id="output">
+          <div id="summary" class="muted">Aguardando cálculo — pressione "Calcular".</div>
+          <hr>
+          <div id="details" style="font-size:13px"></div>
+        </div>
+
+        <div id="canvasBox">
+          <canvas id="boxCanvas"></canvas>
+        </div>
+
+        <div class="info-block">
+          <strong>Como é medido</strong>
+          <div class="muted" style="margin-top:6px">
+            Altura = (folhas × espessura + capas) ÷ 1000 (m).<br>
+            Largura = largura × folhas ÷ 1000 (m).<br>
+            Profundidade = profundidade × folhas ÷ 1000 (m).<br>
+            Volume = altura × largura × profundidade.<br>
+            Tempo = altura (m) × horas em metro.
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <footer>
+      🔍 Dica: para maior precisão, meça 10 folhas com régua e divida em 10 para obter a espessura média.
+    </footer>
+  </main>
+
+  <script>
+    function mmToMeters(mm){ return mm/1000; }
+
+    function formatMeters(m){
+      if(m >= 1) return m.toFixed(3) + ' m';
+      if(m >= 0.001) return (m*100).toFixed(2) + ' cm';
+      return (m*1000).toFixed(1) + ' mm';
+    }
+
+    function calculate(){
+      const thickness = parseFloat(document.getElementById('thickness').value) || 0;
+      const width = parseFloat(document.getElementById('width').value) || 0;
+      const depth = parseFloat(document.getElementById('depth').value) || 0;
+      const sheets = parseInt(document.getElementById('sheets').value) || 0;
+      const reams = parseInt(document.getElementById('reams').value) || 0;
+      const sheetsPerReam = parseInt(document.getElementById('sheetsPerReam').value) || 500;
+      const boxes = parseInt(document.getElementById('boxes').value) || 0;
+      const sheetsPerBox = parseInt(document.getElementById('sheetsPerBox').value) || 2500;
+      const covers = parseInt(document.getElementById('covers').value) || 0;
+      const coverThickness = parseFloat(document.getElementById('coverThickness').value) || 0;
+
+      // time inputs
+      const hoursPerMeter = parseFloat(document.getElementById('hoursPerMeter').value) || 0;
+      const hoursPerDay = parseFloat(document.getElementById('hoursPerDay').value) || 7;
+
+      const sheetsFromReams = reams * sheetsPerReam;
+      const sheetsFromBoxes = boxes * sheetsPerBox;
+      const totalSheets = sheets + sheetsFromReams + sheetsFromBoxes;
+
+      const sheetsHeightMm = totalSheets * thickness;
+      const coversHeightMm = covers * coverThickness;
+      const totalHeightMm = sheetsHeightMm + coversHeightMm;
+      const heightM = mmToMeters(totalHeightMm);
+
+      const totalWidthMm = totalSheets * width;
+      const widthM = mmToMeters(totalWidthMm);
+
+      const totalDepthMm = totalSheets * depth;
+      const depthM = mmToMeters(totalDepthMm);
+
+      const volume = heightM * widthM * depthM;
+
+      // time calculations (based on height in meters)
+      const totalHours = heightM * hoursPerMeter;
+      const totalDays = totalHours / hoursPerDay;
+
+      const summary = [];
+      summary.push(`<strong>Total de folhas:</strong> ${totalSheets.toLocaleString()} folhas`);
+      summary.push(`<strong>Altura total:</strong> ${totalHeightMm.toLocaleString()} mm → <strong>${heightM.toFixed(4)} m</strong>`);
+      summary.push(`<strong>Largura total:</strong> ${totalWidthMm.toLocaleString()} mm → <strong>${widthM.toFixed(4)} m</strong>`);
+      summary.push(`<strong>Profundidade total:</strong> ${totalDepthMm.toLocaleString()} mm → <strong>${depthM.toFixed(4)} m</strong>`);
+      summary.push(`<strong>Volume total:</strong> ${volume.toFixed(6)} m³`);
+      summary.push(`<strong>Tempo de tratamento:</strong> ${totalHours.toFixed(2)} horas → ${totalDays.toFixed(2)} dias úteis (com ${hoursPerDay} h/dia)`);
+
+      const perReamMeters = mmToMeters(sheetsPerReam * thickness);
+      const perBoxMeters = mmToMeters(sheetsPerBox * thickness);
+
+      const details = [];
+      details.push(`<div><strong>Detalhes numéricos</strong></div>`);
+      details.push(`<div class="small muted">1 folha = ${thickness} mm (altura) × ${width} mm (largura) × ${depth} mm (profundidade)</div>`);
+      details.push(`<div class="small">1 maço (${sheetsPerReam} folhas) ⇒ ${perReamMeters.toFixed(4)} m (altura)</div>`);
+      details.push(`<div class="small">1 caixa (${sheetsPerBox} folhas) ⇒ ${perBoxMeters.toFixed(4)} m (altura)</div>`);
+      details.push(`<div class="small">Distribuição: folhas=${sheets.toLocaleString()}, maços=${reams.toLocaleString()} (= ${sheetsFromReams.toLocaleString()} folhas), caixas=${boxes.toLocaleString()} (= ${sheetsFromBoxes.toLocaleString()} folhas)</div>`);
+
+      document.getElementById('summary').innerHTML = summary.join('<br>');
+      document.getElementById('details').innerHTML = details.join('');
+
+      drawBox(widthM, depthM, heightM);
+
+      return { totalSheets, totalHeightMm, heightM, totalWidthMm, widthM, totalDepthMm, depthM, volume, totalHours, totalDays };
+    }
+
+    function drawBox(w, d, h){
+      const canvas = document.getElementById('boxCanvas');
+      const ctx = canvas.getContext('2d');
+      // handle high-DPI screens
+      const ratio = window.devicePixelRatio || 1;
+      const cw = canvas.width = Math.floor(canvas.parentElement.clientWidth * ratio);
+      const ch = canvas.height = Math.floor(canvas.parentElement.clientHeight * ratio);
+      canvas.style.width = canvas.parentElement.clientWidth + 'px';
+      canvas.style.height = canvas.parentElement.clientHeight + 'px';
+      ctx.setTransform(ratio,0,0,ratio,0,0);
+
+      ctx.clearRect(0,0,cw,ch);
+
+      // Escala simples para caber (defesas contra zero)
+      const safeW = Math.max(w, 0.0001);
+      const safeH = Math.max(h, 0.0001);
+      const safeD = Math.max(d, 0.0001);
+
+      const scale = Math.min(canvas.parentElement.clientWidth/(safeW*200), canvas.parentElement.clientHeight/(safeH*200));
+      const boxW = safeW*200*scale;
+      const boxH = safeH*200*scale;
+      const boxD = safeD*100*scale;
+
+      const x = (canvas.parentElement.clientWidth - (boxW + boxD))/2 + boxD; // center offset
+      const y = (canvas.parentElement.clientHeight + boxH)/2 + 6;
+
+      // sombras & estilos
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.shadowColor = 'rgba(0,0,0,0.12)';
+      ctx.shadowBlur = 12;
+
+      ctx.strokeStyle = '#0b63d6';
+      ctx.fillStyle = 'rgba(11,99,214,0.12)';
+      ctx.lineWidth = 2;
+
+      // face frontal
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x+boxW, y);
+      ctx.lineTo(x+boxW, y-boxH);
+      ctx.lineTo(x, y-boxH);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // face direita (profundidade)
+      ctx.beginPath();
+      ctx.moveTo(x+boxW, y);
+      ctx.lineTo(x+boxW+boxD, y-boxD/2);
+      ctx.lineTo(x+boxW+boxD, y-boxH-boxD/2);
+      ctx.lineTo(x+boxW, y-boxH);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // face superior
+      ctx.beginPath();
+      ctx.moveTo(x, y-boxH);
+      ctx.lineTo(x+boxD, y-boxH-boxD/2);
+      ctx.lineTo(x+boxW+boxD, y-boxH-boxD/2);
+      ctx.lineTo(x+boxW, y-boxH);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // legendas claras
+      ctx.fillStyle = '#111';
+      ctx.font = '13px Inter, system-ui, Arial';
+      ctx.fillText(`W: ${w.toFixed(3)} m`, x, y+18);
+      ctx.fillText(`D: ${d.toFixed(3)} m`, x+boxW+boxD-72, y-boxD/2+16);
+      ctx.fillText(`H: ${h.toFixed(3)} m`, x+boxW/2-20, y-boxH-6);
+    }
+
+    document.getElementById('calc').addEventListener('click', ()=>{
+      const res = calculate();
+      const timeBox = document.getElementById('timeBox');
+      timeBox.innerHTML = `<div class="muted"><strong>Horas estimadas:</strong> ${res.totalHours.toFixed(2)} h</div><div class="muted"><strong>Dias úteis (· ${document.getElementById('hoursPerDay').value} h/dia):</strong> ${res.totalDays.toFixed(2)} dias</div>`;
+    });
+
+    document.getElementById('reset').addEventListener('click', ()=>{
+      document.getElementById('thickness').value = '0.10';
+      document.getElementById('width').value = '210';
+      document.getElementById('depth').value = '297';
+      document.getElementById('sheets').value = '1000';
+      document.getElementById('reams').value = '2';
+      document.getElementById('sheetsPerReam').value = '500';
+      document.getElementById('boxes').value = '1';
+      document.getElementById('sheetsPerBox').value = '2500';
+      document.getElementById('covers').value = '0';
+      document.getElementById('coverThickness').value = '0.50';
+      document.getElementById('hoursPerMeter').value = '2';
+      document.getElementById('hoursPerDay').value = '7';
+      document.getElementById('summary').innerHTML = 'Aguardando cálculo — pressione "Calcular".';
+      document.getElementById('details').innerHTML = '';
+      document.getElementById('timeBox').innerHTML = '';
+      const ctx = document.getElementById('boxCanvas').getContext('2d');
+      ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    });
+
+    document.getElementById('copy').addEventListener('click', ()=>{
+      const out = calculate();
+      const hoursPerDay = parseFloat(document.getElementById('hoursPerDay').value) || 7;
+      const text = `Total folhas: ${out.totalSheets} -- Altura: ${out.heightM.toFixed(4)} m (${out.totalHeightMm} mm) -- Largura: ${out.widthM.toFixed(4)} m (${out.totalWidthMm} mm) -- Profundidade: ${out.depthM.toFixed(4)} m (${out.totalDepthMm} mm) -- Volume: ${out.volume.toFixed(6)} m³ -- Tempo: ${out.totalHours.toFixed(2)} h (${out.totalDays.toFixed(2)} dias úteis, ${hoursPerDay} h/dia)`;
+      navigator.clipboard?.writeText(text).then(()=>{
+        alert('Resultados copiados:\n' + text);
+      }, ()=>{
+        alert('Não foi possível copiar. Selecione e copie manualmente.');
+      });
+    });
+
+    // resize canvas when viewport changes
+    window.addEventListener('resize', ()=>{
+      // redraw with current values
+      const s = document.getElementById('summary').innerText;
+      if(s && s.indexOf('Aguardando') === -1) calculate();
+    });
+
+    // initial small draw
+    drawBox(0.1,0.21,0.1);
+  </script>
+
